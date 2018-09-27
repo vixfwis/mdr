@@ -2,6 +2,8 @@ import serial
 import threading
 import logging
 from queue import Queue
+from mdr.messages import ResponseFactory
+from time import time, sleep
 
 
 class SerialThread(threading.Thread):
@@ -14,11 +16,13 @@ class SerialThread(threading.Thread):
 
     def __init__(self, port=None):
         super().__init__(name='serial-thread')
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.requests = Queue()
-        self.responses = Queue()
+        self.response_factory = ResponseFactory()
+        self.connected = False
         self.__stop_event = threading.Event()
         self.__mode = self.MODE_WRITE
+        self.__message = None
         self.serial_port = serial.serial_for_url(
             port,
             baudrate=19200,
@@ -39,19 +43,54 @@ class SerialThread(threading.Thread):
     def set_write(self):
         self.__mode = self.MODE_WRITE
 
+    def get_mode(self):
+        return self.__mode
+
+    def get_blocking_event(self):
+        return self.response_factory.blocking_event
+
+    def unblock(self):
+        self.response_factory.continue_event.set()
+
     def run(self):
         # Handshake with 0x23, stop thread if not responding
-        connected = False
         try:
             self.serial_port.write(self.ACK)
             if self.serial_port.read(1) == self.ACK:
-                connected = True
-        except serial.SerialTimeoutException:
+                self.connected = True
+        except serial.SerialTimeoutException:  # pragma: no cover
             self.logger.error('Failed to connect')
-        if connected:
+        if self.connected:
             # Main loop
             while not self.__stop_event.is_set():
+                sleep(0.01)
                 if self.__mode == self.MODE_WRITE and not self.requests.empty():
-                    pass
+                    self.__message = self.requests.get()
+                    self.logger.debug('Received message from request queue: {}'.format(self.__message))
+                    for byte in self.__message.get_bytes():
+                        self.logger.debug('Sending 0x{}'.format(bytes([byte]).hex()))
+                        self.serial_port.write(bytes([byte]))
+                        self.logger.debug('Waiting for ACK byte response')
+                        if self.serial_port.read(1) == self.ACK:
+                            self.logger.debug('ACK received')
+                            self.__message.inc_sent_count()
+                    if self.__message.expect_response():
+                        self.logger.debug('Message is expecting response, switching to read mode')
+                        self.set_read()
                 elif self.__mode == self.MODE_READ and self.serial_port.in_waiting > 0:
-                    pass
+                    t = time()
+                    while time() - t < 1:
+                        sleep(0.01)
+                        if self.serial_port.in_waiting > 0:
+                            b = self.serial_port.read(1)[0]
+                            self.logger.debug('Received 0x{}'.format(bytes([b]).hex()))
+                            if b == self.ACK[0]:
+                                break
+                            self.response_factory.submit(b)
+                            self.logger.debug('Writing ACK to serial port')
+                            self.serial_port.write(self.ACK)
+                            self.__message.inc_rcv_count()
+                    self.logger.debug('Switching back to write mode')
+                    self.set_write()
+        else:
+            raise serial.SerialException('Could not connect')  # pragma: no cover

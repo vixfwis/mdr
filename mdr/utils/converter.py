@@ -1,5 +1,7 @@
 from struct import pack, unpack
 
+from math import trunc
+
 
 def to_float(b):
     """
@@ -25,3 +27,11 @@ def from_float(f):
     arr[0], arr[1] = arr[2], arr[3]
     arr[2], arr[3] = b1, b2
     return arr
+
+
+def from_short(s):
+    return bytearray(pack('h', s))
+
+
+def scan_array(start, end, step):
+    return trunc((end-start)/(step*2))

@@ -26,6 +26,9 @@ class Message:
     def expect_response(self):
         raise NotImplementedError('Implement in subclass')
 
+    def get_delay(self):
+        return 5
+
 
 class BaseResponse:
     def __init__(self):

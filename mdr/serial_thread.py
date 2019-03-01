@@ -54,6 +54,7 @@ class SerialThread(threading.Thread):
 
     def run(self):
         # Handshake with 0x23, stop thread if not responding
+        self.logger.debug('Starting serial thread')
         try:
             self.serial_port.write(self.ACK)
             if self.serial_port.read(1) == self.ACK:
@@ -68,24 +69,26 @@ class SerialThread(threading.Thread):
                     self.__message = self.requests.get()
                     self.logger.debug('Received message from request queue: {}'.format(self.__message))
                     for byte in self.__message.get_bytes():
+                        sleep(0.01)
                         self.logger.debug('Sending 0x{}'.format(bytes([byte]).hex()))
                         self.serial_port.write(bytes([byte]))
                         self.logger.debug('Waiting for ACK byte response')
                         if self.serial_port.read(1) == self.ACK:
                             self.logger.debug('ACK received')
                             self.__message.inc_sent_count()
-                    if self.__message.expect_response():
+                    if self.__message.expect_response() is not None:
                         self.logger.debug('Message is expecting response, switching to read mode')
                         self.set_read()
                 elif self.__mode == self.MODE_READ and self.serial_port.in_waiting > 0:
                     t = time()
-                    while time() - t < 1:
+                    while time() - t < self.__message.get_delay():
                         sleep(0.01)
+                        if not self.response_factory.chk_fin(self.__message.expect_response()):
+                            t = time()
                         if self.serial_port.in_waiting > 0:
+                            t = time()
                             b = self.serial_port.read(1)[0]
                             self.logger.debug('Received 0x{}'.format(bytes([b]).hex()))
-                            if b == self.ACK[0]:
-                                break
                             self.response_factory.submit(b)
                             self.logger.debug('Writing ACK to serial port')
                             self.serial_port.write(self.ACK)

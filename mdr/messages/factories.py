@@ -15,7 +15,11 @@ class ResponseFactory:
         self.continue_event = Event()
         self.responses = Queue()
 
+        self.exp_fin = False
+
     def submit(self, byte):
+        if self.remaining_bytes == 0 and self.current_response is not None:
+            self.current_response = None
         self.logger.debug('Received byte %i' % byte)
         if self.current_response is None:
             self.logger.debug('Trying to find correct response class')
@@ -36,13 +40,21 @@ class ResponseFactory:
                 self.logger.debug('Event set. Cleaning up...')
                 self.blocking_event.clear()
                 self.continue_event.clear()
-            self.current_response = None
 
     def find_response_class(self, byte):
         for r in self.response_classes:
             if r.signal_byte()[0] == byte:
                 return r
         raise ClassNotFound('Response class not found for signal byte {}'.format(bytes([byte]).hex()))
+
+    def chk_fin(self, klass):
+        if self.current_response is None:
+            return False
+        else:
+            return isinstance(self.current_response, klass)
+
+    def clear(self):
+        self.current_response = None
 
 
 class RequestFactory:

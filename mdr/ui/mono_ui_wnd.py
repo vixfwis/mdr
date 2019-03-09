@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainwindow.ui'
+# Form implementation generated from reading ui file 'mono_ui_wnd.ui'
 #
 # Created by: PyQt5 UI code generator 5.12
 #
@@ -10,10 +10,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_mainWindow(object):
-    def setupUi(self, mainWindow):
-        mainWindow.setObjectName("mainWindow")
-        mainWindow.resize(1131, 656)
-        self.centralWidget = QtWidgets.QWidget(mainWindow)
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.setGeometry(QtCore.QRect(0, 0, 1131, 656))
+        self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralWidget)
         self.horizontalLayout.setContentsMargins(11, 11, 11, 11)
@@ -158,26 +158,26 @@ class Ui_mainWindow(object):
         self.btnStop.setObjectName("btnStop")
         self.gridLayout.addWidget(self.btnStop, 8, 1, 1, 3)
         self.horizontalLayout.addWidget(self.verticalWidget)
-        mainWindow.setCentralWidget(self.centralWidget)
-        self.menuBar = QtWidgets.QMenuBar(mainWindow)
+        MainWindow.setCentralWidget(self.centralWidget)
+        self.menuBar = QtWidgets.QMenuBar(MainWindow)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 1131, 21))
         self.menuBar.setObjectName("menuBar")
         self.menu = QtWidgets.QMenu(self.menuBar)
         self.menu.setObjectName("menu")
         self.menu_2 = QtWidgets.QMenu(self.menuBar)
         self.menu_2.setObjectName("menu_2")
-        mainWindow.setMenuBar(self.menuBar)
-        self.mainToolBar = QtWidgets.QToolBar(mainWindow)
+        MainWindow.setMenuBar(self.menuBar)
+        self.mainToolBar = QtWidgets.QToolBar(MainWindow)
         self.mainToolBar.setObjectName("mainToolBar")
-        mainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.mainToolBar)
-        self.statusBar = QtWidgets.QStatusBar(mainWindow)
+        MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.mainToolBar)
+        self.statusBar = QtWidgets.QStatusBar(MainWindow)
         self.statusBar.setObjectName("statusBar")
-        mainWindow.setStatusBar(self.statusBar)
-        self.actionPLACEHOLDER = QtWidgets.QAction(mainWindow)
+        MainWindow.setStatusBar(self.statusBar)
+        self.actionPLACEHOLDER = QtWidgets.QAction(MainWindow)
         self.actionPLACEHOLDER.setObjectName("actionPLACEHOLDER")
-        self.menuExit = QtWidgets.QAction(mainWindow)
+        self.menuExit = QtWidgets.QAction(MainWindow)
         self.menuExit.setObjectName("menuExit")
-        self.menuConnect = QtWidgets.QAction(mainWindow)
+        self.menuConnect = QtWidgets.QAction(MainWindow)
         self.menuConnect.setObjectName("menuConnect")
         self.menu.addAction(self.actionPLACEHOLDER)
         self.menu.addSeparator()
@@ -186,14 +186,14 @@ class Ui_mainWindow(object):
         self.menuBar.addAction(self.menu.menuAction())
         self.menuBar.addAction(self.menu_2.menuAction())
 
-        self.retranslateUi(mainWindow)
+        self.retranslateUi(MainWindow)
         self.step.setCurrentIndex(4)
         self.speed.setCurrentIndex(3)
-        QtCore.QMetaObject.connectSlotsByName(mainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def retranslateUi(self, mainWindow):
+    def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        mainWindow.setWindowTitle(_translate("mainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("mainWindow", "MainWindow"))
         self.label_6.setText(_translate("mainWindow", "Напряжение ФЭУ-62 (400-1600)"))
         self.voltagePEM1.setText(_translate("mainWindow", "1100"))
         self.rangeHigh.setText(_translate("mainWindow", "600"))

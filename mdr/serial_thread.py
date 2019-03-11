@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import serial
 import threading
 import logging
@@ -20,6 +22,7 @@ class SerialThread(threading.Thread):
         self.requests = Queue()
         self.response_factory = ResponseFactory()
         self.connected = False
+        self.status_func = None
         self.__stop_event = threading.Event()
         self.__mode = self.MODE_WRITE
         self.__message = None
@@ -33,6 +36,13 @@ class SerialThread(threading.Thread):
             xonxoff=False,
             write_timeout=5,
         )
+
+    def setStatusFunc(self, func):
+        self.status_func = func
+
+    def set_status(self, status):
+        if self.status_func is not None:
+            self.status_func(status)
 
     def stop(self):
         self.__stop_event.set()
@@ -55,17 +65,22 @@ class SerialThread(threading.Thread):
     def run(self):
         # Handshake with 0x23, stop thread if not responding
         self.logger.debug('Starting serial thread')
+        self.set_status('Подключение...')
         try:
             self.serial_port.write(self.ACK)
             if self.serial_port.read(1) == self.ACK:
                 self.connected = True
+                self.set_status('Подключено')
         except serial.SerialTimeoutException:  # pragma: no cover
             self.logger.error('Failed to connect')
+            self.set_status('Ошибка подключения')
         if self.connected:
             # Main loop
             while not self.__stop_event.is_set():
                 sleep(0.01)
+                self.set_status('Ожидание')
                 if self.__mode == self.MODE_WRITE and not self.requests.empty():
+                    self.set_status('Передача')
                     self.__message = self.requests.get()
                     self.logger.debug('Received message from request queue: {}'.format(self.__message))
                     for byte in self.__message.get_bytes():
@@ -83,6 +98,7 @@ class SerialThread(threading.Thread):
                     t = time()
                     while time() - t < self.__message.get_delay():
                         sleep(0.01)
+                        self.set_status('Прием')
                         if not self.response_factory.chk_fin(self.__message.expect_response()):
                             t = time()
                         if self.serial_port.in_waiting > 0:

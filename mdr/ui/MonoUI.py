@@ -6,12 +6,13 @@ from PyQt5.QtGui import QPainter, QPolygonF
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5 import QtCore
 
+from mdr.messages import RequestFactory
 from mdr.messages.const import STEP, SPEED
 from mdr.serial_thread import SerialThread
 from mdr.ui import mono_ui_wnd
 
 
-class MonoUI(QMainWindow, mono_ui_wnd.Ui_mainWindow):
+class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -46,12 +47,22 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_mainWindow):
         self.chart.setAxisX(self.ax, self.curve)
         self.chart.setAxisY(self.ay, self.curve)
 
-        self.menuConnect.triggered.connect(self.actMenuConnect)
+        self.port = 'COM1'
+        self.rf = RequestFactory()
+        self.btnConn.clicked.connect(self.actionConnect)
+        self.btnCalib.clicked.connect(self.actionCalib)
 
-    def actMenuConnect(self):
+    def actionCalib(self):
+        r = self.rf.get_request('Calibrate')
+        self.serial.requests.put(r)
+
+    def setStatus(self, status):
+        self.setStatusBar(status)
+
+    def actionConnect(self):
         if self.serial is not None:
             self.serial.stop()
-        self.serial = SerialThread(port='COM4')
+        self.serial = SerialThread(port=self.port)
         self.serial.setDaemon(True)
         self.serial.start()
 

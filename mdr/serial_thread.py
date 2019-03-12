@@ -15,6 +15,7 @@ class SerialThread(threading.Thread):
     MODE_READ = 0
     MODE_WRITE = 1
     ACK = bytes.fromhex('23')
+    ABORT = bytes.fromhex('89')
 
     def __init__(self, port=None):
         super().__init__(name='serial-thread')
@@ -24,6 +25,7 @@ class SerialThread(threading.Thread):
         self.connected = False
         self.status_func = None
         self.__stop_event = threading.Event()
+        self.__abort_event = threading.Event()
         self.__mode = self.MODE_WRITE
         self.__message = None
         self.serial_port = serial.serial_for_url(
@@ -46,6 +48,9 @@ class SerialThread(threading.Thread):
 
     def stop(self):
         self.__stop_event.set()
+
+    def abort_current_task(self):
+        self.__abort_event.set()
 
     def set_read(self):
         self.__mode = self.MODE_READ
@@ -86,7 +91,11 @@ class SerialThread(threading.Thread):
                     for byte in self.__message.get_bytes():
                         sleep(0.01)
                         self.logger.debug('Sending 0x{}'.format(bytes([byte]).hex()))
-                        self.serial_port.write(bytes([byte]))
+                        if self.__abort_event.is_set():
+                            self.serial_port.write(self.ABORT)
+                            self.__abort_event.clear()
+                        else:
+                            self.serial_port.write(bytes([byte]))
                         self.logger.debug('Waiting for ACK byte response')
                         if self.serial_port.read(1) == self.ACK:
                             self.logger.debug('ACK received')
@@ -107,7 +116,11 @@ class SerialThread(threading.Thread):
                             self.logger.debug('Received 0x{}'.format(bytes([b]).hex()))
                             self.response_factory.submit(b)
                             self.logger.debug('Writing ACK to serial port')
-                            self.serial_port.write(self.ACK)
+                            if self.__abort_event.is_set():
+                                self.serial_port.write(self.ABORT)
+                                self.__abort_event.clear()
+                            else:
+                                self.serial_port.write(self.ACK)
                             self.__message.inc_rcv_count()
                     self.logger.debug('Switching back to write mode')
                     self.set_write()

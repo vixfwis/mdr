@@ -7,6 +7,8 @@ from queue import Queue
 from mdr.messages import ResponseFactory
 from time import time, sleep
 
+from mdr.utils.port import find_port
+
 
 class SerialThread(threading.Thread):
     """
@@ -28,6 +30,8 @@ class SerialThread(threading.Thread):
         self.__abort_event = threading.Event()
         self.__mode = self.MODE_WRITE
         self.__message = None
+        if port is None:
+            port = find_port()
         self.serial_port = serial.serial_for_url(
             port,
             baudrate=19200,

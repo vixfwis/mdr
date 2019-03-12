@@ -81,9 +81,9 @@ class SetVoltage(__Message):
         return None
 
     def get_bytes(self):
-        if self.app == 1:
+        if self.app == 1:  # ФЭУ-100
             request = bytearray.fromhex('82')
-        elif self.app == 2:
+        elif self.app == 2:  # ФЭУ-62
             request = bytearray.fromhex('83')
         else:
             raise AttributeError('Wrong input params')
@@ -238,3 +238,31 @@ class ManualGetWaveLength(__Message):
 
     def get_bytes(self):
         return bytearray.fromhex('8a06')
+
+
+class ManualFaster(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-faster'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8f01')
+
+
+class ManualSlower(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-slower'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8f02')

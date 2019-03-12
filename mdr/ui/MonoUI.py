@@ -10,6 +10,7 @@ from mdr.messages import RequestFactory
 from mdr.messages.const import STEP, SPEED
 from mdr.serial_thread import SerialThread
 from mdr.ui import mono_ui_wnd
+from mdr.ui.DebugUI import DebugUI
 
 
 class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
@@ -51,6 +52,16 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.rf = RequestFactory()
         self.btnConn.clicked.connect(self.actionConnect)
         self.btnCalib.clicked.connect(self.actionCalib)
+        self.dbg_wnd = None
+        self.actionShow.triggered.connect(self.actionShowDebugWnd)
+
+    def actionShowDebugWnd(self):
+        if self.serial is None:
+            self.serial = SerialThread(port=self.port)
+            self.serial.setDaemon(True)
+            self.serial.start()
+        self.dbg_wnd = DebugUI(self.serial)
+        self.dbg_wnd.show()
 
     def actionCalib(self):
         r = self.rf.get_request('Calibrate')
@@ -61,7 +72,9 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
 
     def actionConnect(self):
         if self.serial is not None:
+            self.serial.abort_current_task()
             self.serial.stop()
+            self.serial = None
         self.serial = SerialThread(port=self.port)
         self.serial.setDaemon(True)
         self.serial.start()

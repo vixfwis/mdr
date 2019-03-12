@@ -154,3 +154,87 @@ class SetChange(__Message):
             request.append(b)
         for b in from_float(self.second):
             request.append(b)
+
+
+class ManualStop(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-stop'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8a01')
+
+
+class ManualForward(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-forward'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8a03')
+
+
+class ManualReverse(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-reverse'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8a02')
+
+
+class ManualEndMode(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-end-mode'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8a04')
+
+
+class ManualBeginMode(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-begin-mode'
+
+    def expect_response(self):
+        return resp.Ready
+
+    def get_bytes(self):
+        return bytearray.fromhex('8a05')
+
+
+class ManualGetWaveLength(__Message):
+    def __init__(self):
+        super().__init__()
+
+    def __repr__(self):
+        return 'manual-get-wave-length'
+
+    def expect_response(self):
+        return resp.GetWaveLength
+
+    def get_bytes(self):
+        return bytearray.fromhex('8a06')

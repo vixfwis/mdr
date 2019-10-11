@@ -26,9 +26,9 @@ class SerialThread(threading.Thread):
         self.response_factory = ResponseFactory()
         self.connected = False
         self.status_func = None
+        self.mode = self.MODE_WRITE
         self.__stop_event = threading.Event()
         self.__abort_event = threading.Event()
-        self.__mode = self.MODE_WRITE
         self.__message = None
         if port is None:
             port = scan_ports()
@@ -57,13 +57,13 @@ class SerialThread(threading.Thread):
         self.__abort_event.set()
 
     def set_read(self):
-        self.__mode = self.MODE_READ
+        self.mode = self.MODE_READ
 
     def set_write(self):
-        self.__mode = self.MODE_WRITE
+        self.mode = self.MODE_WRITE
 
     def get_mode(self):
-        return self.__mode
+        return self.mode
 
     def get_blocking_event(self):
         return self.response_factory.blocking_event
@@ -94,7 +94,7 @@ class SerialThread(threading.Thread):
                     self.set_write()
                     self.response_factory.reset()
                     self.__abort_event.clear()
-                if self.__mode == self.MODE_WRITE and not self.requests.empty():
+                if self.mode == self.MODE_WRITE and not self.requests.empty():
                     self.set_status('Передача')
                     self.__message = self.requests.get()
                     self.logger.debug('Received message from request queue: {}'.format(self.__message))
@@ -109,7 +109,7 @@ class SerialThread(threading.Thread):
                     if self.__message.expect_response() is not None:
                         self.logger.debug('Message is expecting response, switching to read mode')
                         self.set_read()
-                elif self.__mode == self.MODE_READ and self.serial_port.in_waiting > 0:
+                elif self.mode == self.MODE_READ and self.serial_port.in_waiting > 0:
                     t = time()
                     while time() - t < self.__message.get_delay():
                         sleep(0.01)

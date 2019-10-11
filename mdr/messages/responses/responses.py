@@ -69,6 +69,8 @@ class RequestSetPEM(__BaseResponse):
     PEM = {
         1: 'ФЭУ-100',
         2: 'ФЭУ-62',
+        3: 'F',
+        4: 'F'
     }
 
     def __init__(self):

@@ -41,7 +41,7 @@ class SetWaveLengthWO(__Message):
 
 class Measure(__Message):
     def expect_response(self):
-        return resp.GetFloatValue
+        return resp.Ready
 
     def __init__(self):
         super().__init__()

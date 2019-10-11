@@ -41,6 +41,17 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
         self.btnManualFaster.clicked.connect(self.manual_faster)
         self.btnManualSlower.clicked.connect(self.manual_slower)
         self.btnStop.clicked.connect(self.abort)
+        self.btnMono.clicked.connect(self.mono_scan)
+
+    def mono_scan(self):
+        startWL = float(self.lineMonoStart.text())
+        stopWL = float(self.lineMonoEnd.text())
+        step = STEP[self.comboMonoStep.currentText()]
+        speed = SPEED[self.comboMonoSpeed.currentText()]
+        empty = 0
+        length = int((stopWL - startWL) / float(self.comboMonoStep.currentText()))
+        r = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
+        self.serial.requests.put(r)
 
     def status_timeout(self):
         req_size = self.serial.requests.qsize()
@@ -54,7 +65,7 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
             res_d = self.serial.response_factory.responses.queue
             cres = res_d[0]
 
-        self.labelResult.setText(f'ReS: {req_size} RqS: {res_size} ReC: {creq} RqC: {cres}')
+        self.labelResult.setText(f'ReS: {req_size} RqS: {res_size} ReC: {creq} RqC: {cres} W: {self.serial.mode}')
 
     def intr_timeout(self):
         if self.serial.get_blocking_event().is_set():

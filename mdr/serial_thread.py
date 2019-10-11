@@ -7,7 +7,7 @@ from queue import Queue
 from mdr.messages import ResponseFactory
 from time import time, sleep
 
-from mdr.utils.port import find_port
+from mdr.utils.port import scan_ports
 
 
 class SerialThread(threading.Thread):
@@ -31,7 +31,7 @@ class SerialThread(threading.Thread):
         self.__mode = self.MODE_WRITE
         self.__message = None
         if port is None:
-            port = find_port()
+            port = scan_ports()
         self.serial_port = serial.serial_for_url(
             port,
             baudrate=19200,

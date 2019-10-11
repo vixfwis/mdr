@@ -1,10 +1,21 @@
 from concurrent.futures.thread import ThreadPoolExecutor
-
+from concurrent.futures import as_completed
 import serial
 
 
-def find_port():
+def scan_ports():
     pool = ThreadPoolExecutor()
+    ports = [f'COM{i}' for i in range(1, 10)]
+    futures = {pool.submit(check_port, p): p for p in ports}
+    for f in as_completed(futures):
+        port = futures[f]
+        try:
+            result = f.result()
+        except Exception as exc:
+            print(f'{port} generated an exception: {exc}')
+        else:
+            if result:
+                return port
 
 
 def check_port(port):
@@ -21,11 +32,10 @@ def check_port(port):
         p.write(ACK)
         p.flush()
         b = p.read(1)
-        print(b)
         if b == ACK:
             return True
-        return None
+        return False
     except serial.SerialException as e:
         p = None
         del p
-        return None
+        return False

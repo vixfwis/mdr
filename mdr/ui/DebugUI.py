@@ -19,6 +19,10 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
         self.resp_timer.timeout.connect(self.resp_timeout)
         self.resp_timer.start(250)
 
+        self.intr_timer = QTimer()
+        self.intr_timer.timeout.connect(self.intr_timeout)
+        self.intr_timer.start(250)
+
         self.btnSetWL.clicked.connect(self.set_wl)
         self.btnSetWLWO.clicked.connect(self.set_wlwo)
         self.btnMeasure.clicked.connect(self.measure)
@@ -33,6 +37,10 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
         self.btnManualFaster.clicked.connect(self.manual_faster)
         self.btnManualSlower.clicked.connect(self.manual_slower)
         self.btnStop.clicked.connect(self.abort)
+
+    def intr_timeout(self):
+        if self.serial.get_blocking_event().is_set():
+            self.serial.unblock()
 
     def resp_timeout(self):
         if not self.serial.response_factory.responses.empty():

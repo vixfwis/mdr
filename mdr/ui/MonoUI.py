@@ -2,8 +2,9 @@
 
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPainter, QPolygonF
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow
 from PyQt5 import QtCore
 
 from mdr.messages import RequestFactory
@@ -50,10 +51,34 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
 
         self.port = 'COM1'
         self.rf = RequestFactory()
-        self.btnConn.clicked.connect(self.actionConnect)
-        self.btnCalib.clicked.connect(self.actionCalib)
         self.dbg_wnd = None
+
+        self.resp_timer = QTimer()
+        self.resp_timer.timeout.connect(self.resp_timeout)
+        self.resp_timer.start(250)
+
         self.actionShow.triggered.connect(self.actionShowDebugWnd)
+        self.btnStart.clicked.connect(self.actionMonoScan)
+
+    def actionMonoScan(self):
+        startWL = float(self.rangeLow.text())
+        stopWL = float(self.rangeHigh.text())
+        step = STEP[self.step.currentText()]
+        speed = SPEED[self.speed.currentText()]
+        empty = 0
+        length = (stopWL - startWL) / float(self.step.currentText())
+        r = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
+        self.serial.requests.put(r)
+
+    def intr_timeout(self):
+        if self.serial.get_blocking_event().is_set():
+            self.serial.unblock()
+
+    def resp_timeout(self):
+        if self.serial:
+            if not self.serial.response_factory.responses.empty():
+                r = self.serial.response_factory.responses.get()
+                self.labelResult.setText(str(r.process()))
 
     def actionShowDebugWnd(self):
         if self.serial is None:
@@ -62,6 +87,7 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
             self.serial.start()
         self.dbg_wnd = DebugUI(self.serial)
         self.dbg_wnd.show()
+        self.actionCalib()
 
     def actionCalib(self):
         r = self.rf.get_request('Calibrate')

@@ -47,6 +47,12 @@ class ResponseFactory:
                 return r
         raise ClassNotFound('Response class not found for signal byte {}'.format(bytes([byte]).hex()))
 
+    def reset(self):
+        self.remaining_bytes = 0
+        self.current_response = None
+        self.blocking_event.clear()
+        self.continue_event.clear()
+
     def chk_fin(self, klass):
         if self.current_response is None:
             return False

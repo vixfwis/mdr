@@ -88,6 +88,12 @@ class SerialThread(threading.Thread):
             while not self.__stop_event.is_set():
                 sleep(0.01)
                 self.set_status('Ожидание')
+                if self.__abort_event.is_set():
+                    self.serial_port.write(bytes.fromhex('89'))
+                    self.serial_port.read(1)
+                    self.set_write()
+                    self.response_factory.reset()
+                    self.__abort_event.clear()
                 if self.__mode == self.MODE_WRITE and not self.requests.empty():
                     self.set_status('Передача')
                     self.__message = self.requests.get()
@@ -95,11 +101,7 @@ class SerialThread(threading.Thread):
                     for byte in self.__message.get_bytes():
                         sleep(0.01)
                         self.logger.debug('Sending 0x{}'.format(bytes([byte]).hex()))
-                        if self.__abort_event.is_set():
-                            self.serial_port.write(self.ABORT)
-                            self.__abort_event.clear()
-                        else:
-                            self.serial_port.write(bytes([byte]))
+                        self.serial_port.write(bytes([byte]))
                         self.logger.debug('Waiting for ACK byte response')
                         if self.serial_port.read(1) == self.ACK:
                             self.logger.debug('ACK received')
@@ -111,6 +113,13 @@ class SerialThread(threading.Thread):
                     t = time()
                     while time() - t < self.__message.get_delay():
                         sleep(0.01)
+                        if self.__abort_event.is_set():
+                            self.serial_port.write(bytes.fromhex('89'))
+                            self.serial_port.read(1)
+                            self.set_write()
+                            self.response_factory.reset()
+                            self.__abort_event.clear()
+                            break
                         self.set_status('Прием')
                         if not self.response_factory.chk_fin(self.__message.expect_response()):
                             t = time()
@@ -120,11 +129,7 @@ class SerialThread(threading.Thread):
                             self.logger.debug('Received 0x{}'.format(bytes([b]).hex()))
                             self.response_factory.submit(b)
                             self.logger.debug('Writing ACK to serial port')
-                            if self.__abort_event.is_set():
-                                self.serial_port.write(self.ABORT)
-                                self.__abort_event.clear()
-                            else:
-                                self.serial_port.write(self.ACK)
+                            self.serial_port.write(self.ACK)
                             self.__message.inc_rcv_count()
                     self.logger.debug('Switching back to write mode')
                     self.set_write()

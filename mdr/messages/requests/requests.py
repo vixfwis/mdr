@@ -234,7 +234,7 @@ class ManualGetWaveLength(__Message):
         return 'manual-get-wave-length'
 
     def expect_response(self):
-        return resp.GetWaveLength
+        return resp.Ready
 
     def get_bytes(self):
         return bytearray.fromhex('8a06')

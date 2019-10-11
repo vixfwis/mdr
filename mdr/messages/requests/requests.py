@@ -248,7 +248,7 @@ class ManualFaster(__Message):
         return 'manual-faster'
 
     def expect_response(self):
-        return resp.Ready
+        return None
 
     def get_bytes(self):
         return bytearray.fromhex('8f01')
@@ -262,7 +262,7 @@ class ManualSlower(__Message):
         return 'manual-slower'
 
     def expect_response(self):
-        return resp.Ready
+        return None
 
     def get_bytes(self):
-        return bytearray.fromhex('8f02')
+        return bytearray.fromhex('8f00')

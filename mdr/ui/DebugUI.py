@@ -17,11 +17,15 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
 
         self.resp_timer = QTimer()
         self.resp_timer.timeout.connect(self.resp_timeout)
-        self.resp_timer.start(250)
+        self.resp_timer.start(50)
 
         self.intr_timer = QTimer()
         self.intr_timer.timeout.connect(self.intr_timeout)
-        self.intr_timer.start(250)
+        self.intr_timer.start(50)
+
+        self.status_timer = QTimer()
+        self.status_timer.timeout.connect(self.status_timeout)
+        self.status_timer.start(50)
 
         self.btnSetWL.clicked.connect(self.set_wl)
         self.btnSetWLWO.clicked.connect(self.set_wlwo)
@@ -38,6 +42,20 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
         self.btnManualSlower.clicked.connect(self.manual_slower)
         self.btnStop.clicked.connect(self.abort)
 
+    def status_timeout(self):
+        req_size = self.serial.requests.qsize()
+        res_size = self.serial.response_factory.responses.qsize()
+        creq = None
+        if not self.serial.requests.empty():
+            req_d = self.serial.requests.queue
+            creq = req_d[0]
+        cres = None
+        if not self.serial.response_factory.responses.empty():
+            res_d = self.serial.response_factory.responses.queue
+            cres = res_d[0]
+
+        self.labelResult.setText(f'ReS: {req_size} RqS: {res_size} ReC: {creq} RqC: {cres}')
+
     def intr_timeout(self):
         if self.serial.get_blocking_event().is_set():
             self.serial.unblock()
@@ -45,7 +63,7 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
     def resp_timeout(self):
         if not self.serial.response_factory.responses.empty():
             r = self.serial.response_factory.responses.get()
-            self.labelResult.setText(str(r.process()))
+            print(f'{r}: {r.process()}')
 
     def set_wl(self):
         wl = float(self.lineSetWL.text())

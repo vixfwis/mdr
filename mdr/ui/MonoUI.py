@@ -12,6 +12,7 @@ from mdr.messages.const import STEP, SPEED
 from mdr.serial_thread import SerialThread
 from mdr.ui import mono_ui_wnd
 from mdr.ui.DebugUI import DebugUI
+from mdr.utils.port import scan_ports
 
 
 class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
@@ -49,13 +50,9 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.chart.setAxisX(self.ax, self.curve)
         self.chart.setAxisY(self.ay, self.curve)
 
-        self.port = 'COM1'
+        self.port = scan_ports()
         self.rf = RequestFactory()
         self.dbg_wnd = None
-
-        self.resp_timer = QTimer()
-        self.resp_timer.timeout.connect(self.resp_timeout)
-        self.resp_timer.start(250)
 
         self.actionShow.triggered.connect(self.actionShowDebugWnd)
         self.btnStart.clicked.connect(self.actionMonoScan)
@@ -70,16 +67,6 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         r = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
         self.serial.requests.put(r)
 
-    def intr_timeout(self):
-        if self.serial.get_blocking_event().is_set():
-            self.serial.unblock()
-
-    def resp_timeout(self):
-        if self.serial:
-            if not self.serial.response_factory.responses.empty():
-                r = self.serial.response_factory.responses.get()
-                self.labelResult.setText(str(r.process()))
-
     def actionShowDebugWnd(self):
         if self.serial is None:
             self.serial = SerialThread(port=self.port)
@@ -87,7 +74,6 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
             self.serial.start()
         self.dbg_wnd = DebugUI(self.serial)
         self.dbg_wnd.show()
-        self.actionCalib()
 
     def actionCalib(self):
         r = self.rf.get_request('Calibrate')

@@ -1,6 +1,6 @@
 from mdr.utils.converter import from_float, from_short
-from ..message import Message as __Message
-from ..responses import responses as resp
+from mdr.messages import Message as __Message
+from mdr.messages.responses import responses as resp
 
 
 class SetWaveLength(__Message):
@@ -64,7 +64,7 @@ class Calibrate(__Message):
         return resp.Ready
 
     def get_bytes(self):
-        #return bytearray.fromhex('84018500000000')
+        # return bytearray.fromhex('84018500000000')
         return bytearray.fromhex('8b0b8c018d0084018500000000')
 
 
@@ -75,7 +75,7 @@ class SetVoltage(__Message):
         self.voltage = voltage
 
     def __repr__(self):
-        return 'set-voltage'
+        return 'set-voltage %f' % self.voltage
 
     def expect_response(self):
         return None
@@ -103,7 +103,7 @@ class MonoScan(__Message):
         self.array_length = array_length
 
     def __repr__(self):
-        return 'mono-scan'
+        return f'mono-scan {self.start} to {self.end}; {self.array_length} values'
 
     def expect_response(self):
         return resp.GetFloatValue
@@ -122,6 +122,35 @@ class MonoScan(__Message):
             request.append(b)
         request.append(bytes.fromhex('81')[0])
         request.append(1)
+        return request
+
+
+class KinScan(__Message):
+    def __init__(self, rec_time, wait_time, wavelen, array_length):
+        super().__init__()
+        self.rec_time = rec_time
+        self.wait_time = wait_time
+        self.wavelen = wavelen
+        self.array_length = array_length
+
+    def __repr__(self):
+        return f'kinetic-scan at {self.wavelen}'
+
+    def expect_response(self):
+        return resp.GetFloatValue
+
+    def get_bytes(self):
+        request = bytearray.fromhex('97')
+        for b in from_float(self.rec_time):
+            request.append(b)
+        for b in from_float(self.wait_time):
+            request.append(b)
+        for b in from_float(self.wavelen):
+            request.append(b)
+        for b in from_short(self.array_length):
+            request.append(b)
+        request.append(bytes.fromhex('81')[0])
+        request.append(0)
         return request
 
 

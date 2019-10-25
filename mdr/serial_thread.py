@@ -4,6 +4,7 @@ import serial
 import threading
 import logging
 from queue import Queue
+from mdr.exc import PortNotFound
 from mdr.messages import ResponseFactory
 from time import time, sleep
 
@@ -11,9 +12,6 @@ from mdr.utils.port import scan_ports
 
 
 class SerialThread(threading.Thread):
-    """
-    Class for concurrent processing of serial data
-    """
     MODE_READ = 0
     MODE_WRITE = 1
     ACK = bytes.fromhex('23')
@@ -27,11 +25,13 @@ class SerialThread(threading.Thread):
         self.connected = False
         self.status_func = None
         self.mode = self.MODE_WRITE
-        self.__stop_event = threading.Event()
-        self.__abort_event = threading.Event()
-        self.__message = None
+        self._stop_event = threading.Event()
+        self._abort_event = threading.Event()
+        self._message = None
         if port is None:
             port = scan_ports()
+            if port is None:
+                raise PortNotFound()
         self.serial_port = serial.serial_for_url(
             port,
             baudrate=19200,
@@ -46,15 +46,11 @@ class SerialThread(threading.Thread):
     def setStatusFunc(self, func):
         self.status_func = func
 
-    def set_status(self, status):
-        if self.status_func is not None:
-            self.status_func(status)
-
     def stop(self):
-        self.__stop_event.set()
+        self._stop_event.set()
 
     def abort_current_task(self):
-        self.__abort_event.set()
+        self._abort_event.set()
 
     def set_read(self):
         self.mode = self.MODE_READ
@@ -74,54 +70,48 @@ class SerialThread(threading.Thread):
     def run(self):
         # Handshake with 0x23, stop thread if not responding
         self.logger.debug('Starting serial thread')
-        self.set_status('Подключение...')
         try:
             self.serial_port.write(self.ACK)
             if self.serial_port.read(1) == self.ACK:
                 self.connected = True
-                self.set_status('Подключено')
         except serial.SerialTimeoutException:  # pragma: no cover
             self.logger.error('Failed to connect')
-            self.set_status('Ошибка подключения')
         if self.connected:
             # Main loop
-            while not self.__stop_event.is_set():
+            while not self._stop_event.is_set():
                 sleep(0.01)
-                self.set_status('Ожидание')
-                if self.__abort_event.is_set():
+                if self._abort_event.is_set():
                     self.serial_port.write(bytes.fromhex('89'))
                     self.serial_port.read(1)
                     self.set_write()
                     self.response_factory.reset()
-                    self.__abort_event.clear()
+                    self._abort_event.clear()
                 if self.mode == self.MODE_WRITE and not self.requests.empty():
-                    self.set_status('Передача')
-                    self.__message = self.requests.get()
-                    self.logger.debug('Received message from request queue: {}'.format(self.__message))
-                    for byte in self.__message.get_bytes():
+                    self._message = self.requests.get()
+                    self.logger.debug('Received message from request queue: {}'.format(self._message))
+                    for byte in self._message.get_bytes():
                         sleep(0.01)
                         self.logger.debug('Sending 0x{}'.format(bytes([byte]).hex()))
                         self.serial_port.write(bytes([byte]))
                         self.logger.debug('Waiting for ACK byte response')
                         if self.serial_port.read(1) == self.ACK:
                             self.logger.debug('ACK received')
-                            self.__message.inc_sent_count()
-                    if self.__message.expect_response() is not None:
+                            self._message.inc_sent_count()
+                    if self._message.expect_response() is not None:
                         self.logger.debug('Message is expecting response, switching to read mode')
                         self.set_read()
                 elif self.mode == self.MODE_READ and self.serial_port.in_waiting > 0:
                     t = time()
-                    while time() - t < self.__message.get_delay():
+                    while time() - t < self._message.get_delay():
                         sleep(0.01)
-                        if self.__abort_event.is_set():
+                        if self._abort_event.is_set():
                             self.serial_port.write(bytes.fromhex('89'))
                             self.serial_port.read(1)
                             self.set_write()
                             self.response_factory.reset()
-                            self.__abort_event.clear()
+                            self._abort_event.clear()
                             break
-                        self.set_status('Прием')
-                        if not self.response_factory.chk_fin(self.__message.expect_response()):
+                        if not self.response_factory.chk_fin(self._message.expect_response()):
                             t = time()
                         if self.serial_port.in_waiting > 0:
                             t = time()
@@ -130,7 +120,7 @@ class SerialThread(threading.Thread):
                             self.response_factory.submit(b)
                             self.logger.debug('Writing ACK to serial port')
                             self.serial_port.write(self.ACK)
-                            self.__message.inc_rcv_count()
+                            self._message.inc_rcv_count()
                     self.logger.debug('Switching back to write mode')
                     self.set_write()
         else:

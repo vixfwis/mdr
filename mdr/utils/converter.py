@@ -1,14 +1,8 @@
 from struct import pack, unpack
-
 from math import trunc
 
 
 def to_float(b):
-    """
-    Convert 4 bytes from bytearray to float
-    :type b: bytearray
-    :rtype: float
-    """
     arr = b[:4]
     b1, b2 = arr[0], arr[1]
     arr[0], arr[1] = arr[2], arr[3]
@@ -17,11 +11,6 @@ def to_float(b):
 
 
 def from_float(f):
-    """
-    Convert float to 4 bytes bytearray
-    :type f: float
-    :rtype: bytearray
-    """
     arr = bytearray(pack('f', f))
     b1, b2 = arr[0], arr[1]
     arr[0], arr[1] = arr[2], arr[3]
@@ -33,5 +22,5 @@ def from_short(s):
     return bytearray(pack('h', s))
 
 
-def scan_array(start, end, step):
-    return trunc((end-start)/(step*2))
+def get_scan_array_len(start, end, step):
+    return int(trunc((end-start)/(step*2)))

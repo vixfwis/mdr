@@ -20,6 +20,7 @@ def scan_ports():
 
 def check_port(port):
     ACK = bytes.fromhex('23')
+    r1 = bytes.fromhex('2a')
     try:
         p = serial.serial_for_url(
             port,
@@ -32,7 +33,9 @@ def check_port(port):
         p.write(ACK)
         p.flush()
         b = p.read(1)
-        if b == ACK:
+        p.close()
+        del p
+        if b == ACK or b == r1:
             return True
         return False
     except serial.SerialException as e:

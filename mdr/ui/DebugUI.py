@@ -6,6 +6,7 @@ from mdr.messages import RequestFactory
 from mdr.messages.const import STEP, SPEED
 from mdr.serial_thread import SerialThread
 from mdr.ui import debug_ui_wnd
+from mdr.utils.converter import get_scan_array_len
 
 
 class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
@@ -42,6 +43,15 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
         self.btnManualSlower.clicked.connect(self.manual_slower)
         self.btnStop.clicked.connect(self.abort)
         self.btnMono.clicked.connect(self.mono_scan)
+        self.btnKinetic.clicked.connect(self.kin_scan)
+
+    def kin_scan(self):
+        rec_time = float(self.lineKinRTime.text())
+        wait_time = float(self.lineKinWTime.text())
+        wavelen = int(self.lineKinWL.text())
+        array_len = int(self.lineKinLen.text())
+        r = self.rf.get_request('KinScan', rec_time, wait_time, wavelen, array_len)
+        self.serial.requests.put(r)
 
     def mono_scan(self):
         startWL = float(self.lineMonoStart.text())
@@ -49,7 +59,7 @@ class DebugUI(QMainWindow, debug_ui_wnd.Ui_DebugWindow):
         step = STEP[self.comboMonoStep.currentText()]
         speed = SPEED[self.comboMonoSpeed.currentText()]
         empty = 0
-        length = int((stopWL - startWL) / float(self.comboMonoStep.currentText()))
+        length = get_scan_array_len(startWL, stopWL, float(self.comboMonoStep.currentText()))
         r = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
         self.serial.requests.put(r)
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from threading import Event
 
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
@@ -8,11 +9,12 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5 import QtCore
 
 from mdr.messages import RequestFactory
-from mdr.messages.const import STEP, SPEED
+from mdr.const import STEP, SPEED
+from mdr.messages.responses.responses import GetFloatValue
 from mdr.serial_thread import SerialThread
 from mdr.ui import mono_ui_wnd
 from mdr.ui.DebugUI import DebugUI
-from mdr.utils.port import scan_ports
+from mdr.utils.converter import get_scan_array_len
 
 
 class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
@@ -50,12 +52,67 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.chart.setAxisX(self.ax, self.curve)
         self.chart.setAxisY(self.ay, self.curve)
 
-        self.port = scan_ports()
         self.rf = RequestFactory()
         self.dbg_wnd = None
+        self.current_response = None
+        self.blocking_event = Event()
+
+        self.resp_timer = QTimer()
+        self.resp_timer.timeout.connect(self.resp_timeout)
+        self.resp_timer.start(50)
 
         self.actionShow.triggered.connect(self.actionShowDebugWnd)
         self.btnStart.clicked.connect(self.actionMonoScan)
+        self.btnStop.clicked.connect(self.actionStop)
+        self.menuExit.triggered.connect(self.actionExit)
+        self.actionMDRConnect.triggered.connect(self.actionConnect)
+        self.actionCalibrate.triggered.connect(self.actionCalib)
+        self.statusBtn.clicked.connect(self.actionStatusReset)
+
+        self.mono_data = []
+        self.mono_wls = None
+
+    def actionStatusReset(self):
+        if self.blocking_event.is_set():
+            self.blocking_event.clear()
+            self.serial.unblock()
+            self.statusLabel.setText('')
+
+    def resp_timeout(self):
+        if self.serial is not None:
+            creq = None
+            if not self.serial.requests.empty():
+                req_d = self.serial.requests.queue
+                creq = req_d[0]
+            cres = None
+            if not self.serial.response_factory.responses.empty():
+                res_d = self.serial.response_factory.responses.queue
+                cres = res_d[0]
+            self.statusLabel_2.setText(f'ReC: {creq} RqC: {cres} W: {self.serial.mode}')
+            if self.current_response or not self.serial.response_factory.responses.empty():
+                if self.current_response is None:
+                    self.current_response = self.serial.response_factory.responses.get()
+                if not self.blocking_event.is_set():
+                    if self.serial.get_blocking_event().is_set():
+                        pass  # todo: set status message and blocking event
+                        self.statusLabel.setText(str(self.current_response.process()))
+                        self.blocking_event.set()
+                    else:
+                        pass  # todo: switch case on response class and process data
+                        if isinstance(self.current_response, GetFloatValue):
+                            x = float(self.mono_wls[0])
+                            y = float(self.current_response.process())
+                            self.mono_data.append((x, y))
+                            print(y)
+                            self.curve.append(x, y)
+                            self.mono_wls = self.mono_wls[1:]
+
+    def actionExit(self):
+        exit(0)
+
+    def actionStop(self):
+        if self.serial is not None:
+            self.serial.abort_current_task()
 
     def actionMonoScan(self):
         startWL = float(self.rangeLow.text())
@@ -63,13 +120,19 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         step = STEP[self.step.currentText()]
         speed = SPEED[self.speed.currentText()]
         empty = 0
-        length = (stopWL - startWL) / float(self.step.currentText())
-        r = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
-        self.serial.requests.put(r)
+        length = get_scan_array_len(startWL, stopWL, float(self.step.currentText()))
+        mono_request = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
+        vol1_request = self.rf.get_request('SetVoltage', 1, float(self.voltagePEM1.text()))
+        vol2_request = self.rf.get_request('SetVoltage', 2, float(self.voltagePEM2.text()))
+        self.mono_wls = list(np.linspace(startWL, stopWL, length))
+        self.serial.requests.put(vol1_request)
+        self.serial.requests.put(vol2_request)
+        self.serial.requests.put(mono_request)
+
 
     def actionShowDebugWnd(self):
         if self.serial is None:
-            self.serial = SerialThread(port=self.port)
+            self.serial = SerialThread()
             self.serial.setDaemon(True)
             self.serial.start()
         self.dbg_wnd = DebugUI(self.serial)
@@ -86,8 +149,9 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         if self.serial is not None:
             self.serial.abort_current_task()
             self.serial.stop()
+            self.serial.join()
             self.serial = None
-        self.serial = SerialThread(port=self.port)
+        self.serial = SerialThread()
         self.serial.setDaemon(True)
         self.serial.start()
 

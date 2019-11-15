@@ -17,3 +17,8 @@ STEP = {
     '1': 5,
     '5': 6
 }
+
+MODE_READ = 0
+MODE_WRITE = 1
+ACK = bytes.fromhex('23')
+ABORT = bytes.fromhex('89')

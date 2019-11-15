@@ -14,7 +14,6 @@ class ResponseFactory:
         self.blocking_event = Event()
         self.continue_event = Event()
         self.responses = Queue()
-
         self.exp_fin = False
 
     def submit(self, byte):

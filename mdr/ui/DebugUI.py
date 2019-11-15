@@ -3,8 +3,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMainWindow
 
 from mdr.messages import RequestFactory
-from mdr.messages.const import STEP, SPEED
-from mdr.serial_thread import SerialThread
+from mdr.const import STEP, SPEED
 from mdr.ui import debug_ui_wnd
 from mdr.utils.converter import get_scan_array_len
 

@@ -27,6 +27,38 @@
        </size>
       </property>
       <layout class="QGridLayout" name="gridLayout">
+       <item row="10" column="4">
+        <widget class="QLineEdit" name="lineYMax">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>100</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1" colspan="4">
+        <widget class="QLabel" name="statusLabel_2">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>-</string>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="1">
         <widget class="QLabel" name="label_4">
          <property name="font">
@@ -40,139 +72,7 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="2" colspan="2">
-        <widget class="QComboBox" name="step">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-          </font>
-         </property>
-         <property name="currentText">
-          <string>1</string>
-         </property>
-         <property name="currentIndex">
-          <number>5</number>
-         </property>
-         <item>
-          <property name="text">
-           <string>0.002</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>0.01</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>0.05</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>0.1</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>0.5</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>1</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>5</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="8" column="1" colspan="2">
-        <widget class="QLabel" name="statusLabel">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>12</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>.</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="1" colspan="3">
-        <widget class="QPushButton" name="btnStop">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>СТОП</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLabel" name="label">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Шаг дискретизации (нм)</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="9" column="1" colspan="3">
-        <widget class="QPushButton" name="btnStart">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>ПУСК</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_2">
-         <property name="font">
-          <font>
-           <family>Arial</family>
-           <pointsize>14</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Диапазон (200-25000 нм)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="2">
+       <item row="3" column="3">
         <widget class="QLineEdit" name="repeat">
          <property name="font">
           <font>
@@ -188,7 +88,14 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="2">
+       <item row="8" column="4">
+        <widget class="QPushButton" name="statusBtn">
+         <property name="text">
+          <string>OK</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3">
         <widget class="QLineEdit" name="voltagePEM1">
          <property name="font">
           <font>
@@ -204,35 +111,41 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="2">
-        <widget class="QLineEdit" name="voltagePEM2">
+       <item row="10" column="3">
+        <widget class="QLineEdit" name="lineYMin">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Arial</family>
-           <pointsize>14</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>400</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <string>0</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="3">
-        <widget class="QLineEdit" name="rangeHigh">
+       <item row="9" column="3">
+        <widget class="QLineEdit" name="lineXMin">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Arial</family>
-           <pointsize>14</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>600</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <string>0</string>
          </property>
         </widget>
        </item>
@@ -249,6 +162,48 @@
          </property>
         </widget>
        </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_2">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Диапазон (200-25000 нм)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="3">
+        <widget class="QLineEdit" name="voltagePEM2">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>400</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="2">
+        <widget class="QLabel" name="label_8">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Y</string>
+         </property>
+        </widget>
+       </item>
        <item row="5" column="1">
         <widget class="QLabel" name="label_6">
          <property name="font">
@@ -261,6 +216,19 @@
           <string>Напряжение ФЭУ-62 (400-1600)</string>
          </property>
         </widget>
+       </item>
+       <item row="6" column="1">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item row="2" column="1">
         <widget class="QLabel" name="label_3">
@@ -275,14 +243,52 @@
          </property>
         </widget>
        </item>
-       <item row="8" column="3">
-        <widget class="QPushButton" name="statusBtn">
+       <item row="0" column="4">
+        <widget class="QLineEdit" name="rangeHigh">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="text">
-          <string>OK</string>
+          <string>600</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
-       <item row="2" column="2" colspan="2">
+       <item row="10" column="1">
+        <widget class="QPushButton" name="btnStop">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>СТОП</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLineEdit" name="rangeLow">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>500</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3" colspan="2">
         <widget class="QComboBox" name="speed">
          <property name="font">
           <font>
@@ -333,24 +339,85 @@
          </item>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QLineEdit" name="rangeLow">
+       <item row="8" column="1" colspan="3">
+        <widget class="QLabel" name="statusLabel">
          <property name="font">
           <font>
            <family>Arial</family>
-           <pointsize>14</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>500</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <string>.</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="1" colspan="3">
-        <widget class="QLabel" name="statusLabel_2">
+       <item row="9" column="2">
+        <widget class="QLabel" name="label_7">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>X</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3" colspan="2">
+        <widget class="QComboBox" name="step">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="currentText">
+          <string>1</string>
+         </property>
+         <property name="currentIndex">
+          <number>5</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>0.002</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>0.01</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>0.05</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>0.1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>0.5</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>5</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="label">
          <property name="font">
           <font>
            <family>Arial</family>
@@ -358,7 +425,42 @@
           </font>
          </property>
          <property name="text">
-          <string>-</string>
+          <string>Шаг дискретизации (нм)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QPushButton" name="btnStart">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>ПУСК</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="4">
+        <widget class="QLineEdit" name="lineXMax">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>600</string>
          </property>
         </widget>
        </item>

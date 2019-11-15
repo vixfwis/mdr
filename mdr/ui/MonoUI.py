@@ -69,8 +69,18 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.actionCalibrate.triggered.connect(self.actionCalib)
         self.statusBtn.clicked.connect(self.actionStatusReset)
 
-        self.mono_data = []
         self.mono_wls = None
+        x = np.linspace(300, 400, 100)
+        y = np.sin(x)+50
+        for a, b in zip(x, y):
+            self.curve.append(a, b)
+
+        # todo: mouse control for chart
+
+        # todo: writer to file for each mono scan
+        # on __init__: create file and store csv
+        # on __del__: save and close
+
 
     def actionStatusReset(self):
         if self.blocking_event.is_set():
@@ -79,7 +89,10 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
             self.statusLabel.setText('')
 
     def resp_timeout(self):
+        self.rescale_chart()
         if self.serial is not None:
+            req_size = self.serial.requests.qsize()
+            res_size = self.serial.response_factory.responses.qsize()
             creq = None
             if not self.serial.requests.empty():
                 req_d = self.serial.requests.queue
@@ -88,24 +101,22 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
             if not self.serial.response_factory.responses.empty():
                 res_d = self.serial.response_factory.responses.queue
                 cres = res_d[0]
-            self.statusLabel_2.setText(f'ReC: {creq} RqC: {cres} W: {self.serial.mode}')
+            self.statusLabel_2.setText(f'ReS: {req_size} RqS: {res_size} ReC: {creq} RqC: {cres} W: {self.serial.mode}')
             if self.current_response or not self.serial.response_factory.responses.empty():
                 if self.current_response is None:
                     self.current_response = self.serial.response_factory.responses.get()
                 if not self.blocking_event.is_set():
                     if self.serial.get_blocking_event().is_set():
-                        pass  # todo: set status message and blocking event
                         self.statusLabel.setText(str(self.current_response.process()))
                         self.blocking_event.set()
                     else:
-                        pass  # todo: switch case on response class and process data
                         if isinstance(self.current_response, GetFloatValue):
                             x = float(self.mono_wls[0])
                             y = float(self.current_response.process())
-                            self.mono_data.append((x, y))
-                            print(y)
                             self.curve.append(x, y)
                             self.mono_wls = self.mono_wls[1:]
+                            print(f'{x} : {y}; {len(self.mono_wls)}')
+                        self.current_response = None
 
     def actionExit(self):
         exit(0)
@@ -125,10 +136,10 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         vol1_request = self.rf.get_request('SetVoltage', 1, float(self.voltagePEM1.text()))
         vol2_request = self.rf.get_request('SetVoltage', 2, float(self.voltagePEM2.text()))
         self.mono_wls = list(np.linspace(startWL, stopWL, length))
+        self.curve.clear()
         self.serial.requests.put(vol1_request)
         self.serial.requests.put(vol2_request)
         self.serial.requests.put(mono_request)
-
 
     def actionShowDebugWnd(self):
         if self.serial is None:
@@ -156,10 +167,27 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.serial.start()
 
     def rescale_chart(self):
-        xmax = 1
+        xmax = 600
         xmin = 0
-        ymax = 1
+        ymax = 100
         ymin = 0
+        try:
+            xmax = float(self.lineXMax.text())
+            xmin = float(self.lineXMin.text())
+            ymax = float(self.lineYMax.text())
+            ymin = float(self.lineYMin.text())
+        except ValueError:
+            pass
+        self.ax.setMax(xmax)
+        self.ax.setMin(xmin)
+        self.ay.setMax(ymax)
+        self.ay.setMin(ymin)
+
+    def rescale_chart2(self):
+        xmax = 0
+        xmin = 9999
+        ymax = 0
+        ymin = 9999
         for p in self.curve.pointsVector():
             if p.x() > xmax:
                 xmax = p.x()

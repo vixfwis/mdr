@@ -14,6 +14,7 @@ from mdr.messages.responses.responses import GetFloatValue
 from mdr.serial_thread import SerialThread
 from mdr.ui import mono_ui_wnd
 from mdr.ui.DebugUI import DebugUI
+from mdr.ui.qt import ChartView
 from mdr.utils.converter import get_scan_array_len
 
 
@@ -27,9 +28,10 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.speed.addItems([str(s) for s in SPEED.keys()])
         self.chart = QChart()
         self.chart.legend().hide()
-        self.chartView = QChartView(self.chart)
+        self.chartView = ChartView(self.chart)
         self.chartView.setMinimumSize(QtCore.QSize(400, 300))
         self.chartView.setRenderHint(QPainter.Antialiasing)
+        self.chartView.linkLE(self.lineXMax, self.lineYMax, self.lineXMin, self.lineYMin)
         self.chartLayout.addWidget(self.chartView)
 
         self.serial = None
@@ -44,10 +46,12 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.ay = QValueAxis()
         self.ax.setRange(0, 600)
         self.ay.setRange(0, 100)
-        self.ax.setTickCount(7)
+        self.ax.setTickCount(11)
         self.ay.setTickCount(11)
-        self.ax.setMinorTickCount(1)
-        self.ay.setMinorTickCount(1)
+        self.ax.setMinorTickCount(4)
+        self.ay.setMinorTickCount(4)
+        self.ax.setLabelFormat('%.1f')
+        self.ay.setLabelFormat('%.1f')
 
         self.chart.setAxisX(self.ax, self.curve)
         self.chart.setAxisY(self.ay, self.curve)
@@ -70,12 +74,10 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.statusBtn.clicked.connect(self.actionStatusReset)
 
         self.mono_wls = None
-        x = np.linspace(300, 400, 100)
+        x = np.linspace(300, 400, 1000)
         y = np.sin(x)+50
         for a, b in zip(x, y):
             self.curve.append(a, b)
-
-        # todo: mouse control for chart
 
         # todo: writer to file for each mono scan
         # on __init__: create file and store csv
@@ -167,6 +169,20 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.serial.start()
 
     def rescale_chart(self):
+        xmax = 600
+        xmin = 0
+        ymax = 100
+        ymin = 0
+        try:
+            xmax = float(self.lineXMax.text())
+            xmin = float(self.lineXMin.text())
+            ymax = float(self.lineYMax.text())
+            ymin = float(self.lineYMin.text())
+        except ValueError:
+            pass
+        self.chartView.rescale()
+
+    def rescale_chart3(self):
         xmax = 600
         xmin = 0
         ymax = 100

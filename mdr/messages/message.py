@@ -27,7 +27,7 @@ class Message:
         raise NotImplementedError('Implement in subclass')
 
     def get_delay(self):
-        return 5
+        return 3
 
 
 class BaseResponse:

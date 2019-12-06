@@ -68,15 +68,14 @@ class ChartView(QChartView):
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         if self._band.isVisible():
-            src = self.chart().mapToValue(self._origin)
-            dst = self.chart().mapToValue(event.pos())
-            self.setXMaxLE(max(dst.x(), src.x()))
-            self.setYMaxLe(max(dst.y(), src.y()))
-            self.setXMinLE(min(dst.x(), src.x()))
-            self.setYMinLe(min(dst.y(), src.y()))
+            if abs(event.pos().x() - self._origin.x()) > 3 and abs(event.pos().y() - self._origin.y()) > 3:
+                src = self.chart().mapToValue(self._origin)
+                dst = self.chart().mapToValue(event.pos())
+                self.setXMaxLE(max(dst.x(), src.x()))
+                self.setYMaxLe(max(dst.y(), src.y()))
+                self.setXMinLE(min(dst.x(), src.x()))
+                self.setYMinLe(min(dst.y(), src.y()))
             self._band.hide()
-        if event.buttons() & Qt.RightButton:
-            self.chart().zoomReset()
         event.accept()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
@@ -112,3 +111,5 @@ class ChartView(QChartView):
             pass
         except ValueError:
             pass
+        event.accept()
+

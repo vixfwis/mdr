@@ -4,3 +4,4 @@
 .tox/*
 mdr.egg-info/*
 .coverage
+*.mcs

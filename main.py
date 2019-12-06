@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
+import logging
 import sys
 from PyQt5.QtWidgets import QApplication
 from mdr.ui.MonoUI import MonoUI
 
 
 def main():
+    # logging.basicConfig(filename='mdr.log', level=logging.DEBUG)
     app = QApplication(sys.argv)
     window = MonoUI()
     window.show()

@@ -99,8 +99,10 @@ class SerialThread(threading.Thread):
                     while time() - t < self._message.get_delay():
                         sleep(0.01)
                         if self._abort_event.is_set():
+                            self.logger.debug('Abort event! Writing 89')
                             self.serial_port.write(bytes.fromhex('89'))
                             self.serial_port.read(1)
+                            self.logger.debug('Switching to write and resetting state')
                             self.set_write()
                             self.response_factory.reset()
                             self._abort_event.clear()
@@ -108,13 +110,15 @@ class SerialThread(threading.Thread):
                         if not self.response_factory.chk_fin(self._message.expect_response()):
                             t = time()
                         if self.serial_port.in_waiting > 0:
-                            t = time()
+                            if not self.response_factory.chk_fin(self._message.expect_response()):
+                                self.logger.debug('Finalize check is False')
                             b = self.serial_port.read(1)[0]
                             self.logger.debug('Received 0x{}'.format(bytes([b]).hex()))
                             self.response_factory.submit(b)
                             self.logger.debug('Writing ACK to serial port')
                             self.serial_port.write(ACK)
                             self._message.inc_rcv_count()
+                            t = time()  # do not move up, RF calls might be blocking
                     self.logger.debug('Switching back to write mode')
                     self.set_write()
         else:

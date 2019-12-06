@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import os
 from threading import Event
 
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPainter, QPolygonF
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5 import QtCore
 
 from mdr.messages import RequestFactory
@@ -16,6 +17,7 @@ from mdr.ui import mono_ui_wnd
 from mdr.ui.DebugUI import DebugUI
 from mdr.ui.qt import ChartView
 from mdr.utils.converter import get_scan_array_len
+from mdr.utils.io import FileWriter, parse_file_data
 
 
 class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
@@ -65,24 +67,42 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.resp_timer.timeout.connect(self.resp_timeout)
         self.resp_timer.start(50)
 
-        self.actionShow.triggered.connect(self.actionShowDebugWnd)
+        self.qActionShow.triggered.connect(self.actionShowDebugWnd)
         self.btnStart.clicked.connect(self.actionMonoScan)
         self.btnStop.clicked.connect(self.actionStop)
         self.menuExit.triggered.connect(self.actionExit)
-        self.actionMDRConnect.triggered.connect(self.actionConnect)
-        self.actionCalibrate.triggered.connect(self.actionCalib)
+        self.qActionMDRConnect.triggered.connect(self.actionConnect)
+        self.qActionCalibrate.triggered.connect(self.actionCalibrate)
         self.statusBtn.clicked.connect(self.actionStatusReset)
+        self.qActionOpenFile.triggered.connect(self.actionOpenFile)
 
         self.mono_wls = None
-        x = np.linspace(300, 400, 1000)
-        y = np.sin(x)+50
-        for a, b in zip(x, y):
-            self.curve.append(a, b)
+        self.scan_data = None
+        self.writer = None
 
-        # todo: writer to file for each mono scan
-        # on __init__: create file and store csv
-        # on __del__: save and close
+        # TODO: remove it
+        if self.serial is not None:
+            self.serial.abort_current_task()
+            self.serial.stop()
+            self.serial.join()
+            self.serial = None
+        self.serial = SerialThread()
+        self.serial.setDaemon(True)
+        self.serial.start()
+        # r = self.rf.get_request('Calibrate')
+        # self.serial.requests.put(r)
 
+    def actionOpenFile(self):
+        dlg = QFileDialog()
+        dlg.setAcceptMode(QFileDialog.AcceptOpen)
+        dlg.setFileMode(QFileDialog.ExistingFile)
+        name, flt = dlg.getOpenFileName(caption='Open file', directory=os.getcwd(), filter='MonoScan files(*.mcs)')
+        with open(name, 'r', encoding='utf-8') as f:
+            data = f.read()
+        self.scan_data = parse_file_data(data)
+        self.curve.clear()
+        for x, y in self.scan_data:
+            self.curve.append(x, y)
 
     def actionStatusReset(self):
         if self.blocking_event.is_set():
@@ -117,7 +137,9 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
                             y = float(self.current_response.process())
                             self.curve.append(x, y)
                             self.mono_wls = self.mono_wls[1:]
-                            print(f'{x} : {y}; {len(self.mono_wls)}')
+                            self.scan_data.append((x, y))
+                            self.writer.write(x, y)
+                            # print(f'{x} : {y}; {len(self.mono_wls)}')
                         self.current_response = None
 
     def actionExit(self):
@@ -132,12 +154,18 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         stopWL = float(self.rangeHigh.text())
         step = STEP[self.step.currentText()]
         speed = SPEED[self.speed.currentText()]
+        if self.writer is None:
+            self.writer = FileWriter(f'monoscan-{startWL}-{stopWL}')
+        else:
+            self.writer.reset(f'monoscan-{startWL}-{stopWL}')
+        self.writer.write(f'# MonoScan from {startWL} to {stopWL} at speed {self.speed.currentText()} nm/min, step {self.step.currentText()} nm')
         empty = 0
         length = get_scan_array_len(startWL, stopWL, float(self.step.currentText()))
         mono_request = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
         vol1_request = self.rf.get_request('SetVoltage', 1, float(self.voltagePEM1.text()))
         vol2_request = self.rf.get_request('SetVoltage', 2, float(self.voltagePEM2.text()))
         self.mono_wls = list(np.linspace(startWL, stopWL, length))
+        self.scan_data = []
         self.curve.clear()
         self.serial.requests.put(vol1_request)
         self.serial.requests.put(vol2_request)
@@ -151,7 +179,7 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.dbg_wnd = DebugUI(self.serial)
         self.dbg_wnd.show()
 
-    def actionCalib(self):
+    def actionCalibrate(self):
         r = self.rf.get_request('Calibrate')
         self.serial.requests.put(r)
 

@@ -482,7 +482,7 @@
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="actionPLACEHOLDER"/>
+    <addaction name="qActionOpenFile"/>
     <addaction name="separator"/>
     <addaction name="menuExit"/>
    </widget>
@@ -490,14 +490,14 @@
     <property name="title">
      <string>Debug</string>
     </property>
-    <addaction name="actionShow"/>
+    <addaction name="qActionShow"/>
    </widget>
    <widget class="QMenu" name="menuConnect">
     <property name="title">
      <string>Connect</string>
     </property>
-    <addaction name="actionMDRConnect"/>
-    <addaction name="actionCalibrate"/>
+    <addaction name="qActionMDRConnect"/>
+    <addaction name="qActionCalibrate"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menuConnect"/>
@@ -512,9 +512,9 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionPLACEHOLDER">
+  <action name="qActionOpenFile">
    <property name="text">
-    <string>PLACEHOLDER</string>
+    <string>Открыть</string>
    </property>
   </action>
   <action name="menuExit">
@@ -522,17 +522,17 @@
     <string>Выход</string>
    </property>
   </action>
-  <action name="actionShow">
+  <action name="qActionShow">
    <property name="text">
     <string>Show</string>
    </property>
   </action>
-  <action name="actionMDRConnect">
+  <action name="qActionMDRConnect">
    <property name="text">
     <string>MDR</string>
    </property>
   </action>
-  <action name="actionCalibrate">
+  <action name="qActionCalibrate">
    <property name="text">
     <string>Calibrate</string>
    </property>

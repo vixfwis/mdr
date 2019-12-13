@@ -1,4 +1,6 @@
 from datetime import datetime
+from io import StringIO
+import csv
 
 
 class FileWriter:
@@ -37,11 +39,34 @@ class FileWriter:
         return self.full_name
 
 
-def parse_file_data(data):  # TODO: make serialization and v.v. class and subclass read and write
+def serialize(data: dict) -> str:
+    buf = StringIO()
+    if 'header' not in data.keys() or 'data' not in data.keys():
+        raise KeyError('Data dictionary is incorrect')
+    buf.write('#>#>#>' + '<:>'.join([str(e) for e in data['header']]) + '#>#>#>' + '\n')
+    writer = csv.writer(buf, dialect='unix')
+    for e in data['data']:
+        writer.writerow(e)
+    buf.seek(0)
+    return buf.read()
+
+
+def deserialize(data: str) -> dict:
+    parts = [e for e in data.split('#>#>#>') if e != '']
+    header = [e.strip() for e in parts[0].split('<:>')]
+    data_str = parts[1].strip()
+    reader = csv.reader(StringIO(data_str), dialect='unix')
     arr = []
-    for line in data.split('\n'):
-        if line == '' or line[0] == '#':
-            continue
-        points = line.split('\t')
-        arr.append((float(points[0]), float(points[1])))
-    return arr
+    for e in reader:
+        arr.append([float(i) for i in e])
+    return {
+        'header': header,
+        'data': arr
+    }
+
+
+def add_dt_str(name: str) -> str:
+    formatting = '%Y-%m-%d_%H-%M-%S.%f'
+    current_dt = datetime.now().strftime(formatting)
+    full_name = f'{name}_{current_dt}.mcs'
+    return full_name

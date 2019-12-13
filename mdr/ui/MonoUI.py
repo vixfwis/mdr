@@ -5,7 +5,7 @@ from threading import Event
 import numpy as np
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QValueAxis
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPainter, QPolygonF
+from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5 import QtCore
 
@@ -17,7 +17,7 @@ from mdr.ui import mono_ui_wnd
 from mdr.ui.DebugUI import DebugUI
 from mdr.ui.qt import ChartView
 from mdr.utils.converter import get_scan_array_len
-from mdr.utils.io import FileWriter, parse_file_data
+from mdr.utils.io import serialize, deserialize, add_dt_str
 
 
 class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
@@ -78,7 +78,7 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
 
         self.mono_wls = None
         self.scan_data = None
-        self.writer = None
+        self.filename = None
 
         # TODO: remove it
         if self.serial is not None:
@@ -99,10 +99,21 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         name, flt = dlg.getOpenFileName(caption='Open file', directory=os.getcwd(), filter='MonoScan files(*.mcs)')
         with open(name, 'r', encoding='utf-8') as f:
             data = f.read()
-        self.scan_data = parse_file_data(data)
+        self.scan_data = deserialize(data)
         self.curve.clear()
-        for x, y in self.scan_data:
-            self.curve.append(x, y)
+        ymin = 2 ** 32
+        ymax = 0
+        for e in self.scan_data['data']:
+            self.curve.append(e[0], e[1])
+            if float(e[1]) > ymax:
+                ymax = float(e[1])
+            if float(e[1]) < ymin:
+                ymin = float(e[1])
+        self.lineXMin.setText(str(self.scan_data['header'][0]))
+        self.lineXMax.setText(str(self.scan_data['header'][1]))
+        self.lineYMin.setText(f'{ymin:.3}')
+        self.lineYMax.setText(f'{ymax:.3}')
+
 
     def actionStatusReset(self):
         if self.blocking_event.is_set():
@@ -111,7 +122,7 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
             self.statusLabel.setText('')
 
     def resp_timeout(self):
-        self.rescale_chart()
+        self.chartView.rescale()
         if self.serial is not None:
             req_size = self.serial.requests.qsize()
             res_size = self.serial.response_factory.responses.qsize()
@@ -137,8 +148,10 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
                             y = float(self.current_response.process())
                             self.curve.append(x, y)
                             self.mono_wls = self.mono_wls[1:]
-                            self.scan_data.append((x, y))
-                            self.writer.write(x, y)
+                            self.scan_data['data'].append([x, y])
+                            with open(self.filename, 'w', encoding='utf-8') as f:
+                                f.write(serialize(self.scan_data))
+                            # self.writer.write(x, y)
                             # print(f'{x} : {y}; {len(self.mono_wls)}')
                         self.current_response = None
 
@@ -154,18 +167,20 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         stopWL = float(self.rangeHigh.text())
         step = STEP[self.step.currentText()]
         speed = SPEED[self.speed.currentText()]
-        if self.writer is None:
-            self.writer = FileWriter(f'monoscan-{startWL}-{stopWL}')
-        else:
-            self.writer.reset(f'monoscan-{startWL}-{stopWL}')
-        self.writer.write(f'# MonoScan from {startWL} to {stopWL} at speed {self.speed.currentText()} nm/min, step {self.step.currentText()} nm')
+        vol1 = float(self.voltagePEM1.text())
+        vol2 = float(self.voltagePEM2.text())
+        if self.filename is None:
+            self.filename = add_dt_str(f'monoscan-{startWL}-{stopWL}')
+        self.scan_data = {
+            'header': [startWL, stopWL, self.step.currentText(), self.speed.currentText(), vol1, vol2],
+            'data': []
+        }
         empty = 0
         length = get_scan_array_len(startWL, stopWL, float(self.step.currentText()))
         mono_request = self.rf.get_request('MonoScan', startWL, stopWL, step, speed, empty, length)
-        vol1_request = self.rf.get_request('SetVoltage', 1, float(self.voltagePEM1.text()))
-        vol2_request = self.rf.get_request('SetVoltage', 2, float(self.voltagePEM2.text()))
+        vol1_request = self.rf.get_request('SetVoltage', 1, vol1)
+        vol2_request = self.rf.get_request('SetVoltage', 2, vol2)
         self.mono_wls = list(np.linspace(startWL, stopWL, length))
-        self.scan_data = []
         self.curve.clear()
         self.serial.requests.put(vol1_request)
         self.serial.requests.put(vol2_request)
@@ -195,66 +210,3 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         self.serial = SerialThread()
         self.serial.setDaemon(True)
         self.serial.start()
-
-    def rescale_chart(self):
-        xmax = 600
-        xmin = 0
-        ymax = 100
-        ymin = 0
-        try:
-            xmax = float(self.lineXMax.text())
-            xmin = float(self.lineXMin.text())
-            ymax = float(self.lineYMax.text())
-            ymin = float(self.lineYMin.text())
-        except ValueError:
-            pass
-        self.chartView.rescale()
-
-    def rescale_chart3(self):
-        xmax = 600
-        xmin = 0
-        ymax = 100
-        ymin = 0
-        try:
-            xmax = float(self.lineXMax.text())
-            xmin = float(self.lineXMin.text())
-            ymax = float(self.lineYMax.text())
-            ymin = float(self.lineYMin.text())
-        except ValueError:
-            pass
-        self.ax.setMax(xmax)
-        self.ax.setMin(xmin)
-        self.ay.setMax(ymax)
-        self.ay.setMin(ymin)
-
-    def rescale_chart2(self):
-        xmax = 0
-        xmin = 9999
-        ymax = 0
-        ymin = 9999
-        for p in self.curve.pointsVector():
-            if p.x() > xmax:
-                xmax = p.x()
-            if p.x() < xmin:
-                xmin = p.x()
-            if p.y() > ymax:
-                ymax = p.y()
-            if p.y() < ymin:
-                ymin = p.y()
-        self.ax.setMax(xmax)
-        self.ax.setMin(xmin)
-        self.ay.setMax(ymax)
-        self.ay.setMin(ymin)
-
-    def series_to_polyline(self, xdata, ydata):
-        size = len(xdata)
-        polyline = QPolygonF(size)
-        pointer = polyline.data()
-        dtype, tinfo = np.float, np.finfo  # integers: = np.int, np.iinfo
-        pointer.setsize(2 * polyline.size() * tinfo(dtype).dtype.itemsize)
-        memory = np.frombuffer(pointer, dtype)
-        memory[:(size - 1) * 2 + 1:2] = xdata
-        memory[1:(size - 1) * 2 + 2:2] = ydata
-        return polyline
-
-

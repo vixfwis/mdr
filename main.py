@@ -9,8 +9,8 @@ from mdr.ui.ProcUI import ProcUI
 def main():
     # logging.basicConfig(filename='mdr.log', level=logging.DEBUG)
     app = QApplication(sys.argv)
-    #window = MonoUI()
-    window = ProcUI()
+    window = MonoUI()
+    #window = ProcUI()
     window.show()
     app.exec_()
 

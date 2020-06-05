@@ -22,14 +22,9 @@ def check_port(port):
     ACK = bytes.fromhex('23')
     r1 = bytes.fromhex('2a')
     try:
-        p = serial.serial_for_url(
-            port,
-            baudrate=19200,
-            bytesize=serial.EIGHTBITS,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            timeout=3,
-        )
+        p = serial.serial_for_url(port, baudrate=19200,
+            bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE, timeout=3)
         p.write(ACK)
         p.flush()
         b = p.read(1)

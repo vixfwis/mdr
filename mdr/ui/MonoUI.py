@@ -86,9 +86,9 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
             self.serial.stop()
             self.serial.join()
             self.serial = None
-        self.serial = SerialThread()
-        self.serial.setDaemon(True)
-        self.serial.start()
+        # self.serial = SerialThread()
+        # self.serial.setDaemon(True)
+        # self.serial.start()
         # r = self.rf.get_request('Calibrate')
         # self.serial.requests.put(r)
 
@@ -97,7 +97,7 @@ class MonoUI(QMainWindow, mono_ui_wnd.Ui_MainWindow):
         dlg.setAcceptMode(QFileDialog.AcceptOpen)
         dlg.setFileMode(QFileDialog.ExistingFile)
         name, flt = dlg.getOpenFileName(caption='Open file', directory=os.getcwd(), filter='MonoScan files(*.mcs)')
-        with open(name, 'r', encoding='utf-8') as f:
+        with open(name, 'r', encoding='utf-8') as f:  #todo: error if no file selected
             data = f.read()
         self.scan_data = deserialize(data)
         self.curve.clear()
